@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Office F1 Sim Leaderboard</title>
+    <link rel="stylesheet" href="style.css"> 
+</head>
+<body onload="loadLeaderboard()">
+
+<div class="container">
+    <div class="header-images">
+        <img src="lmclogo.svg" width="200px" height="150px"><img src="f1logo.svg" width="200px" height="150px">
+    </div>
+    <h1>Sim Competition 2026</h1>
+    
+
+    <div class="form-card">
+        <h2>Submit Lap Time</h2>
+
+        <input id="name" type="text" placeholder="Driver Name">
+        <select id="team">
+            <option value="">Team 1</option>
+            <option value="">Team 2</option>
+        </select>
+        <input id="lapTime" type="text" placeholder="Lap Time (e.g 1:23.456)">
+
+        <button onclick="submitLap()">Submit Time</button>
+    </div>
+
+    <div class="controls">
+        <label>Sort By:</label>
+        <select id="sortBy" onchange="updateLeaderboardFilter(this.value)">
+            <option value="lap">Lap Time</option>
+            <option value="name">Name</option>
+            <option value="team">Team</option>
+        </select>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Pos</th>
+                <th>Team</th>
+                <th>Driver</th>
+                <th>Best Lap</th>
+            </tr>
+        </thead>
+        <tbody id="leaderboard">
+            <!--Scores Inserted by app.js-->
+        </tbody>
+    </table>
+    <script src="app.js"></script>
+
+</div>
+
+
+</body>
+</html>
