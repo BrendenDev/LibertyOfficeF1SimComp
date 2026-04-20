@@ -25,7 +25,7 @@ const CACHE_KEYS = {
 
 // Auto-refresh interval for TV mode (ms)
 const TV_ROTATE_INTERVAL = 15000;   // 15 seconds between views
-const DATA_REFRESH_INTERVAL = 300000; // 5 minutes
+const DATA_REFRESH_INTERVAL = 1200000; // 20 minutes
 
 const firebaseConfig = {
     apiKey: "AIzaSyBBW-V5wONoDBNaB0lAU0vFMeKeqpRvx78",

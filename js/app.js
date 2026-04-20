@@ -349,22 +349,34 @@ function renderSchedule() {
 
 async function handleSubmit(e) {
     e.preventDefault();
-    const statusEl = document.getElementById("submit-status");
     const raceId = document.getElementById("submit-race").value;
     const driverName = document.getElementById("submit-driver").value;
-    const timeStr = document.getElementById("submit-time").value;
+    const minVal = document.getElementById("time-min").value;
+    const secVal = document.getElementById("time-sec").value;
+    const msVal = document.getElementById("time-ms").value;
 
     // Validation
-    if (!raceId || !driverName || !timeStr) {
+    if (!raceId || !driverName) {
         showToast("Please fill in all fields.", "error");
         return;
     }
 
-    const timeMs = parseTime(timeStr);
-    if (timeMs === null) {
-        showToast("Invalid time format. Use M:SS.mmm (e.g. 1:23.456)", "error");
+    if (minVal === "" || secVal === "" || msVal === "") {
+        showToast("Please fill in all time fields.", "error");
         return;
     }
+
+    const mins = parseInt(minVal, 10);
+    const secs = parseInt(secVal, 10);
+    const ms = parseInt(msVal, 10);
+
+    if (isNaN(mins) || isNaN(secs) || isNaN(ms) || mins < 0 || secs < 0 || secs > 59 || ms < 0 || ms > 999) {
+        showToast("Invalid time values.", "error");
+        return;
+    }
+
+    const timeMs = mins * 60000 + secs * 1000 + ms;
+    const timeStr = `${mins}:${secs.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
 
     // Resolve team from driver
     const driverInfo = buildDriverTeamMap()[driverName];
@@ -378,7 +390,7 @@ async function handleSubmit(e) {
     btn.classList.add("loading");
     btn.disabled = true;
 
-    const result = await submitTime(raceId, driverName, driverInfo.teamName, timeMs, timeStr.trim());
+    const result = await submitTime(raceId, driverName, driverInfo.teamName, timeMs, timeStr);
 
     btn.classList.remove("loading");
     btn.disabled = false;
@@ -520,6 +532,40 @@ async function initApp() {
     const form = document.getElementById("submit-form");
     if (form) {
         form.addEventListener("submit", handleSubmit);
+    }
+
+    // Time field auto-advance and clamping
+    const timeMin = document.getElementById("time-min");
+    const timeSec = document.getElementById("time-sec");
+    const timeMs = document.getElementById("time-ms");
+
+    if (timeMin && timeSec && timeMs) {
+        // Auto-advance: min (1 digit) → sec, sec (2 digits) → ms
+        timeMin.addEventListener("input", () => {
+            if (timeMin.value.length >= 1) timeSec.focus();
+        });
+        timeSec.addEventListener("input", () => {
+            if (timeSec.value.length >= 2) timeMs.focus();
+        });
+
+        // Clamp values on blur
+        timeMin.addEventListener("blur", () => {
+            const v = parseInt(timeMin.value, 10);
+            if (!isNaN(v)) timeMin.value = Math.max(0, Math.min(9, v));
+        });
+        timeSec.addEventListener("blur", () => {
+            const v = parseInt(timeSec.value, 10);
+            if (!isNaN(v)) timeSec.value = Math.max(0, Math.min(59, v));
+        });
+        timeMs.addEventListener("blur", () => {
+            const v = parseInt(timeMs.value, 10);
+            if (!isNaN(v)) timeMs.value = Math.max(0, Math.min(999, v));
+        });
+
+        // Select all on focus for easy overwrite
+        [timeMin, timeSec, timeMs].forEach(field => {
+            field.addEventListener("focus", () => field.select());
+        });
     }
 
     // ── Keyboard navigation ──

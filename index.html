@@ -113,9 +113,15 @@
                             <datalist id="driver-list"></datalist>
                         </div>
                         <div class="form-group">
-                            <label for="submit-time">Lap Time</label>
-                            <input type="text" id="submit-time" placeholder="1:23.456" required>
-                            <span class="form-hint">Format: M:SS.mmm (e.g. 1:23.456)</span>
+                            <label>Lap Time</label>
+                            <div class="time-input-group">
+                                <input type="number" id="time-min" class="time-field time-min" min="0" max="9" placeholder="M" required>
+                                <span class="time-sep">:</span>
+                                <input type="number" id="time-sec" class="time-field time-sec" min="0" max="59" placeholder="SS" required>
+                                <span class="time-sep">.</span>
+                                <input type="number" id="time-ms" class="time-field time-ms" min="0" max="999" placeholder="mmm" required>
+                            </div>
+                            <span class="form-hint">Minutes : Seconds . Milliseconds</span>
                         </div>
                         <button type="submit" class="btn-submit" id="btn-submit">
                             <span>Submit Time</span>
