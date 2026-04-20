@@ -1,58 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Office F1 Sim Leaderboard</title>
-    <link rel="stylesheet" href="style.css"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liberty Media Sim Competition</title>
+    <meta name="description"
+        content="Office F1 Sim Racing Competition leaderboards, race results, and time submissions.">
+    <link rel="stylesheet" href="css/style.css">
 </head>
-<body onload="loadLeaderboard()">
 
-<div class="container">
-    <div class="header-images">
-        <img src="lmclogo.svg" width="200px" height="150px"><img src="f1logo.svg" width="200px" height="150px">
+<body>
+
+    <div class="container">
+
+        <!-- ===== HEADER ===== -->
+        <header class="header">
+            <div class="header-logos">
+                <img src="assets/lmclogo.svg" alt="Liberty Media" class="logo-lmc">
+                <div class="header-divider"></div>
+                <img src="assets/f1logo.svg" alt="Formula 1" class="logo-f1">
+            </div>
+            <h1 class="title">Sim Competition <span class="title-accent">2026</span></h1>
+            <div class="header-stripe"></div>
+        </header>
+
+        <!-- ===== NAVIGATION ===== -->
+        <nav class="nav" id="main-nav" role="tablist" aria-label="Main navigation">
+        <button class="nav-tab active" data-view="standings" id="tab-standings" role="tab" aria-selected="true" tabindex="0">
+            <span class="nav-icon">🏆</span>
+            <span class="nav-label">Standings</span>
+            <span class="nav-shortcut" aria-hidden="true">1</span>
+        </button>
+        <button class="nav-tab" data-view="races" id="tab-races" role="tab" aria-selected="false" tabindex="-1">
+            <span class="nav-icon">🏁</span>
+            <span class="nav-label">Races</span>
+            <span class="nav-shortcut" aria-hidden="true">2</span>
+        </button>
+        <button class="nav-tab" data-view="submit" id="tab-submit" role="tab" aria-selected="false" tabindex="-1">
+            <span class="nav-icon">⏱️</span>
+            <span class="nav-label">Submit Time</span>
+            <span class="nav-shortcut" aria-hidden="true">3</span>
+        </button>
+        <button class="nav-tab" data-view="schedule" id="tab-schedule" role="tab" aria-selected="false" tabindex="-1">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Schedule</span>
+            <span class="nav-shortcut" aria-hidden="true">4</span>
+        </button>
+    </nav>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main class="main">
+
+            <!-- STANDINGS -->
+            <section id="view-standings" class="view active">
+                <div class="card">
+                    <h2 class="card-title">Constructors' Championship</h2>
+                    <table class="standings-table" id="constructor-standings">
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Team</th>
+                                <th>Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- RACE RESULTS -->
+            <section id="view-races" class="view">
+                <div class="card">
+                    <div class="race-header">
+                        <h2 class="card-title" style="border:none; margin:0; padding:0;">Race Results</h2>
+                        <select id="race-select"></select>
+                    </div>
+                    <table class="race-table" id="race-results">
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Driver</th>
+                                <th>Team</th>
+                                <th>Time</th>
+                                <th>Gap</th>
+                                <th>Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div id="race-empty" class="empty-state" style="display: none;">
+                        No submissions yet for this race.
+                    </div>
+                </div>
+            </section>
+
+            <!-- SUBMIT TIME -->
+            <section id="view-submit" class="view">
+                <div class="card submit-card">
+                    <h2 class="card-title">Submit Lap Time</h2>
+                    <form id="submit-form" autocomplete="off">
+                        <div class="form-group">
+                            <label for="submit-race">Race</label>
+                            <select id="submit-race" required>
+                                <option value="">Select a Race</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="submit-driver">Driver</label>
+                            <input type="text" id="submit-driver" list="driver-list"
+                                placeholder="Type or select your name" required autocomplete="off">
+                            <datalist id="driver-list"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="submit-time">Lap Time</label>
+                            <input type="text" id="submit-time" placeholder="1:23.456" required>
+                            <span class="form-hint">Format: M:SS.mmm (e.g. 1:23.456)</span>
+                        </div>
+                        <button type="submit" class="btn-submit" id="btn-submit">
+                            <span>Submit Time</span>
+                        </button>
+                    </form>
+                    <div id="submit-status" class="submit-status"></div>
+                </div>
+            </section>
+
+            <!-- SCHEDULE -->
+            <section id="view-schedule" class="view">
+                <div id="schedule-grid" class="schedule-grid"></div>
+            </section>
+
+        </main>
+
+        <!-- ===== FOOTER ===== -->
+        <footer class="footer">
+            <p>Office Sim Competition 2026 - Website by Brenden Cheng</p>
+            <div class="keyboard-hints">
+                <span><kbd>1</kbd>–<kbd>4</kbd> Switch tabs</span>
+                <span><kbd>←</kbd> <kbd>→</kbd> Navigate tabs</span>
+                <span><kbd>Tab</kbd> Move focus</span>
+                <span><kbd>T</kbd> TV mode</span>
+            </div>
+        </footer>
+
     </div>
-    <h1>Sim Competition 2026</h1>
-    
 
-    <div class="form-card">
-        <h2>Submit Lap Time</h2>
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
 
-        <input id="name" type="text" placeholder="Driver Name">
-        <select id="team">
-            <option value="">Team 1</option>
-            <option value="">Team 2</option>
-        </select>
-        <input id="lapTime" type="text" placeholder="Lap Time (e.g 1:23.456)">
-
-        <button onclick="submitLap()">Submit Time</button>
+    <!-- TV Mode badge -->
+    <div id="tv-badge" class="tv-badge" style="display: none;">
+        <span>TV MODE</span>
     </div>
 
-    <div class="controls">
-        <label>Sort By:</label>
-        <select id="sortBy" onchange="updateLeaderboardFilter(this.value)">
-            <option value="lap">Lap Time</option>
-            <option value="name">Name</option>
-            <option value="team">Team</option>
-        </select>
-    </div>
+    <!-- TV toggle button -->
+    <button id="tv-toggle" class="tv-toggle-btn">TV Mode</button>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Pos</th>
-                <th>Team</th>
-                <th>Driver</th>
-                <th>Best Lap</th>
-            </tr>
-        </thead>
-        <tbody id="leaderboard">
-            <!--Scores Inserted by app.js-->
-        </tbody>
-    </table>
-    <script src="app.js"></script>
+    <!-- Scripts (order matters: config → firebase → data → app) -->
+    <!-- Firebase SDK (only needed when USE_DUMMY_DATA = false) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
 
-</div>
-
+    <script src="js/config.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
 
 </body>
+
 </html>
