@@ -195,7 +195,7 @@ function renderRacesEditor() {
     const tbody = document.getElementById("races-editor");
 
     if (admin.races.length === 0) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No races yet. Click "+ Add Race" to get started.</td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="7">No races yet. Click "+ Add Race" to get started.</td></tr>`;
         return;
     }
 
@@ -204,7 +204,8 @@ function renderRacesEditor() {
             <td><input type="number" value="${race.order || idx + 1}" data-field="order" class="admin-input" style="width:50px" min="1"></td>
             <td><input type="text" value="${escHtml(race.name)}" data-field="name" class="admin-input" placeholder="Grand Prix name"></td>
             <td><input type="text" value="${escHtml(race.circuit || "")}" data-field="circuit" class="admin-input" placeholder="Circuit name"></td>
-            <td><input type="date" value="${race.date || ""}" data-field="date" class="admin-input" style="width:150px"></td>
+            <td><input type="date" value="${race.startDate || ""}" data-field="startDate" class="admin-input" style="width:150px"></td>
+            <td><input type="date" value="${race.endDate || ""}" data-field="endDate" class="admin-input" style="width:150px"></td>
             <td class="cell-muted">${escHtml(race.id)}</td>
             <td><button class="btn btn-small btn-danger" onclick="removeRace(${idx})" title="Delete race">✕</button></td>
         </tr>
@@ -224,7 +225,8 @@ function addRace() {
         id: "race_" + Date.now(),
         name: "",
         circuit: "",
-        date: "",
+        startDate: "",
+        endDate: "",
         order: nextOrder,
     });
     admin.racesModified = true;
@@ -251,13 +253,11 @@ function collectRaceData() {
     const rows = document.querySelectorAll("#races-editor tr");
     return Array.from(rows).map((row, idx) => {
         const inputs = row.querySelectorAll("input");
-        if (inputs.length < 4) return null;
+        if (inputs.length < 5) return null;
 
         const name = inputs[1].value.trim();
-        // Use existing ID if available, otherwise generate from name
         const existingId = admin.races[idx]?.id;
         const generatedId = name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
-        // Keep existing ID if the race already exists in DB, otherwise generate
         const id = (existingId && !existingId.startsWith("race_")) ? existingId : generatedId;
 
         return {
@@ -265,7 +265,8 @@ function collectRaceData() {
             order: parseInt(inputs[0].value, 10) || idx + 1,
             name: name,
             circuit: inputs[2].value.trim(),
-            date: inputs[3].value,
+            startDate: inputs[3].value,
+            endDate: inputs[4].value,
         };
     }).filter(Boolean);
 }
@@ -299,7 +300,8 @@ async function publishRaces() {
             batch.set(ref, {
                 name: race.name,
                 circuit: race.circuit,
-                date: race.date,
+                startDate: race.startDate,
+                endDate: race.endDate,
                 order: race.order,
             });
         }

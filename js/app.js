@@ -312,36 +312,46 @@ function renderSchedule() {
     const grid = document.getElementById("schedule-grid");
     if (!grid) return;
 
+    const fmtDate = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
     grid.innerHTML = RACES.map(race => {
         const subCount = state.submissions.filter(s => s.raceId === race.id).length;
-        const raceDate = new Date(race.date + "T00:00:00");
+        const start = new Date(race.startDate + "T00:00:00");
+        const end = new Date(race.endDate + "T23:59:59");
         const now = new Date();
         let status, statusClass;
 
-        if (subCount > 0) {
-            status = "Completed";
-            statusClass = "status-completed";
-        } else if (raceDate > now) {
+        if (now < start) {
             status = "Upcoming";
             statusClass = "status-upcoming";
-        } else {
+        } else if (now <= end) {
             status = "Active";
             statusClass = "status-active";
+        } else {
+            status = "Completed";
+            statusClass = "status-completed";
         }
 
-        const dateStr = raceDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        const dateRange = `${fmtDate(start)} – ${fmtDate(end)}`;
 
         return `
-            <div class="schedule-card">
+            <div class="schedule-card" onclick="viewRaceResults('${race.id}')" style="cursor:pointer" title="View race results">
                 <div class="schedule-round">ROUND ${race.order}</div>
                 <h3 class="schedule-name">${race.name}</h3>
                 <p class="schedule-circuit">${race.circuit}</p>
-                <p class="schedule-date">${dateStr}</p>
+                <p class="schedule-date">${dateRange}</p>
                 <span class="schedule-status ${statusClass}">${status}</span>
                 ${subCount > 0 ? `<p class="schedule-entries">${subCount} entries</p>` : ""}
             </div>
         `;
     }).join("");
+}
+
+
+
+function viewRaceResults(raceId) {
+    state.selectedRaceId = raceId;
+    switchView("races");
 }
 
 

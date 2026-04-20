@@ -9,13 +9,13 @@
 /* ---------- DUMMY DATA ---------- */
 
 const DUMMY_RACES = [
-    { id: "bahrain", name: "Bahrain Grand Prix", circuit: "Bahrain International Circuit", date: "2026-03-15", order: 1 },
-    { id: "monaco", name: "Monaco Grand Prix", circuit: "Circuit de Monaco", date: "2026-05-24", order: 2 },
-    { id: "silverstone", name: "British Grand Prix", circuit: "Silverstone Circuit", date: "2026-07-05", order: 3 },
-    { id: "spa", name: "Belgian Grand Prix", circuit: "Circuit de Spa-Francorchamps", date: "2026-07-26", order: 4 },
-    { id: "monza", name: "Italian Grand Prix", circuit: "Autodromo Nazionale Monza", date: "2026-09-06", order: 5 },
-    { id: "singapore", name: "Singapore Grand Prix", circuit: "Marina Bay Street Circuit", date: "2026-10-04", order: 6 },
-    { id: "abu_dhabi", name: "Abu Dhabi Grand Prix", circuit: "Yas Marina Circuit", date: "2026-12-06", order: 7 },
+    { id: "bahrain", name: "Bahrain Grand Prix", circuit: "Bahrain International Circuit", startDate: "2026-03-09", endDate: "2026-03-20", order: 1 },
+    { id: "monaco", name: "Monaco Grand Prix", circuit: "Circuit de Monaco", startDate: "2026-05-18", endDate: "2026-05-29", order: 2 },
+    { id: "silverstone", name: "British Grand Prix", circuit: "Silverstone Circuit", startDate: "2026-06-29", endDate: "2026-07-10", order: 3 },
+    { id: "spa", name: "Belgian Grand Prix", circuit: "Circuit de Spa-Francorchamps", startDate: "2026-07-20", endDate: "2026-07-31", order: 4 },
+    { id: "monza", name: "Italian Grand Prix", circuit: "Autodromo Nazionale Monza", startDate: "2026-08-31", endDate: "2026-09-11", order: 5 },
+    { id: "singapore", name: "Singapore Grand Prix", circuit: "Marina Bay Street Circuit", startDate: "2026-09-28", endDate: "2026-10-09", order: 6 },
+    { id: "abu_dhabi", name: "Abu Dhabi Grand Prix", circuit: "Yas Marina Circuit", startDate: "2026-11-30", endDate: "2026-12-11", order: 7 },
 ];
 
 // Global mutable — populated by fetchRaces(), used everywhere
