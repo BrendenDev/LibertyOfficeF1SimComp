@@ -158,43 +158,37 @@
                         <div class="rules-icon">⏱️</div>
                         <h2 class="rules-card-title">Lap Time Submission</h2>
                         <ul class="rules-list">
-                            <li>Each driver may submit <strong>one lap time per race</strong> — no resubmissions or overwrites.</li>
-                            <li>Times must be entered in <strong>Minutes : Seconds . Milliseconds</strong> format.</li>
-                            <li>Submissions are accepted only during the <strong>active race window</strong> (between the race start and end date).</li>
-                            <li>Make sure to select the correct race before submitting — mistakes cannot be corrected without admin intervention.</li>
+                            <li>Submit your single <strong>best lap time</strong> per race. Only one submission is permitted, and resubmissions are strictly prohibited.</li>
+                            <li>Submissions are only accepted during an <strong>Active</strong> race window.</li>
                         </ul>
                     </div>
 
                     <div class="card rules-card">
                         <div class="rules-icon">🏆</div>
                         <h2 class="rules-card-title">Points System</h2>
-                        <p class="rules-subtitle">Awarded to the top 10 finishers after each race ends.</p>
-                        <div class="points-table">
-                            <div class="points-row header-row">
-                                <span>Position</span><span>Points</span>
-                            </div>
-                            <div class="points-row"><span class="pos-badge pos-1">1</span><span>25</span></div>
-                            <div class="points-row"><span class="pos-badge pos-2">2</span><span>18</span></div>
-                            <div class="points-row"><span class="pos-badge pos-3">3</span><span>15</span></div>
-                            <div class="points-row"><span class="pos-badge">4</span><span>12</span></div>
-                            <div class="points-row"><span class="pos-badge">5</span><span>10</span></div>
-                            <div class="points-row"><span class="pos-badge">6</span><span>8</span></div>
-                            <div class="points-row"><span class="pos-badge">7</span><span>6</span></div>
-                            <div class="points-row"><span class="pos-badge">8</span><span>4</span></div>
-                            <div class="points-row"><span class="pos-badge">9</span><span>2</span></div>
-                            <div class="points-row"><span class="pos-badge">10</span><span>1</span></div>
+                        <p class="rules-subtitle">Awarded to the top 10 fastest drivers.</p>
+                        <div class="points-horizontal-list">
+                            <div class="point-item"><span class="pos-badge pos-1">1</span><span class="pts">25</span></div>
+                            <div class="point-item"><span class="pos-badge pos-2">2</span><span class="pts">18</span></div>
+                            <div class="point-item"><span class="pos-badge pos-3">3</span><span class="pts">15</span></div>
+                            <div class="point-item"><span class="pos-badge">4</span><span class="pts">12</span></div>
+                            <div class="point-item"><span class="pos-badge">5</span><span class="pts">10</span></div>
+                            <div class="point-item"><span class="pos-badge">6</span><span class="pts">8</span></div>
+                            <div class="point-item"><span class="pos-badge">7</span><span class="pts">6</span></div>
+                            <div class="point-item"><span class="pos-badge">8</span><span class="pts">4</span></div>
+                            <div class="point-item"><span class="pos-badge">9</span><span class="pts">2</span></div>
+                            <div class="point-item"><span class="pos-badge">10</span><span class="pts">1</span></div>
                         </div>
-                        <p class="rules-note">Points and wins are <strong>not awarded</strong> until the race end date has passed.</p>
                     </div>
 
                     <div class="card rules-card">
                         <div class="rules-icon">🏎️</div>
                         <h2 class="rules-card-title">Drivers' Championship</h2>
                         <ul class="rules-list">
-                            <li>All drivers compete individually across all races.</li>
-                            <li>Points accumulate from every race using the standard points system above.</li>
-                            <li>In the event of a points tie, the driver with <strong>more wins</strong> ranks higher.</li>
-                            <li>Lap times are hidden on the race board <strong>until the race window closes</strong> — results reveal only after the end date.</li>
+                            <li>Drivers compete individually for the fastest lap time.</li>
+                            <li>Lap times remain <strong>hidden</strong> during active races to ensure competitive fairness.</li>
+                            <li>When the race window closes, all times are revealed and points are awarded to the top 10 drivers.</li>
+                            <li>Season ties are resolved by the highest number of 1st-place race wins.</li>
                         </ul>
                     </div>
 
@@ -202,22 +196,10 @@
                         <div class="rules-icon">🔧</div>
                         <h2 class="rules-card-title">Constructors' Championship</h2>
                         <ul class="rules-list">
-                            <li>Teams consist of <strong>3 drivers</strong> each.</li>
-                            <li>All 3 drivers may submit times and compete in the Drivers' Championship.</li>
-                            <li>However, only the <strong>top 2 drivers per team</strong> (by lap time) count toward the Constructors' Championship per race.</li>
-                            <li>Constructor points are <strong>re-ranked</strong> from the filtered field — not inherited from the full driver race. The fastest eligible driver across all teams gets P1 constructor points, and so on.</li>
-                            <li>In the event of a points tie, the team with <strong>more race wins</strong> (constructor wins) ranks higher.</li>
-                        </ul>
-                    </div>
-
-                    <div class="card rules-card">
-                        <div class="rules-icon">📅</div>
-                        <h2 class="rules-card-title">Race Schedule</h2>
-                        <ul class="rules-list">
-                            <li>Each race has a <strong>start date</strong> and an <strong>end date</strong>.</li>
-                            <li><span class="status-pill status-upcoming">Upcoming</span> — race window has not opened yet. Submissions are not accepted.</li>
-                            <li><span class="status-pill status-active">Active</span> — race is currently open. Submit your lap time now.</li>
-                            <li><span class="status-pill status-completed">Completed</span> — race window has closed. Times, gaps, and points are now revealed.</li>
+                            <li>Drivers concurrently score points for their 3-person constructor team.</li>
+                            <li>Only the <strong>top 2 lap times</strong> per team contribute to constructor points. The slowest time is discarded from the scoring pool.</li>
+                            <li>Points are awarded to the remaining eligible drivers based on the standard Points System.</li>
+                            <li>Season ties are resolved by the team's total number of race wins.</li>
                         </ul>
                     </div>
 

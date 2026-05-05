@@ -1273,3 +1273,33 @@ select:focus-visible {
     font-size: 0.9em;
     margin: 0 2px;
 }
+
+/* ===== RULES PAGE ===== */
+.points-horizontal-list {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--sp-1);
+    margin-top: var(--sp-3);
+    overflow-x: auto;
+    padding-bottom: var(--sp-2); /* For scrollbar breathing room */
+}
+
+.point-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--sp-2);
+    flex: 1 1 0;
+    min-width: 38px;
+}
+
+.point-item .pts {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: var(--sp-1);
+}
