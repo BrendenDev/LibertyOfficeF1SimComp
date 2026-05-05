@@ -182,7 +182,13 @@ function formatGap(gapMs) {
 const TAB_ORDER = ["standings", "races", "submit", "rules"];
 
 function switchView(viewId, focusTab = false) {
+    if (!TAB_ORDER.includes(viewId)) viewId = "standings";
     state.activeView = viewId;
+
+    // Update URL Hash without triggering hashchange event loop
+    if (window.location.hash !== `#${viewId}`) {
+        window.history.pushState(null, "", `#${viewId}`);
+    }
 
     // Update tabs + ARIA
     document.querySelectorAll(".nav-tab").forEach(tab => {
@@ -344,16 +350,13 @@ function toggleRaceBoard() {
     state.raceBoardMode = state.raceBoardMode === "drivers" ? "constructors" : "drivers";
 
     const btn = document.getElementById("race-board-toggle");
-    const title = document.getElementById("race-board-title");
 
     if (state.raceBoardMode === "constructors") {
         btn.textContent = "Drivers' View";
         btn.classList.add("active");
-        if (title) title.textContent = "Constructors' Results";
     } else {
         btn.textContent = "Constructors' View";
         btn.classList.remove("active");
-        if (title) title.textContent = "Drivers' Results";
     }
 
     renderRaceBoard();
@@ -366,12 +369,19 @@ function renderRaceBoard() {
     const raceId = state.selectedRaceId || RACES[0]?.id;
     if (!raceId) return;
 
+    const race = RACES.find(r => r.id === raceId);
+
+    const title = document.getElementById("race-board-title");
+    if (title && race) {
+        const modeText = state.raceBoardMode === "constructors" ? "Constructors' Results" : "Drivers' Results";
+        title.innerHTML = `${modeText} <span style="color:var(--text-muted); font-size:0.75em; font-weight:400; margin-left:var(--sp-3); border-left: 1px solid var(--border); padding-left: var(--sp-3);">${race.circuit}</span>`;
+    }
+
     const allResults = computeRaceResults(raceId);
     const tbody = document.querySelector("#race-results tbody");
     const emptyEl = document.getElementById("race-empty");
     const tableEl = document.getElementById("race-results");
 
-    const race = RACES.find(r => r.id === raceId);
     const raceOver = race?.endDate
         ? new Date() > new Date(race.endDate + "T23:59:59")
         : true;
@@ -620,13 +630,25 @@ async function initApp() {
         showToast("Failed to load data. Using cached data.", "error");
     }
 
-    // Set default selected race (most recent with submissions, or first)
-    const racesWithSubs = RACES.filter(r =>
-        state.submissions.some(s => s.raceId === r.id)
-    );
-    state.selectedRaceId = racesWithSubs.length > 0
-        ? racesWithSubs[racesWithSubs.length - 1].id
-        : RACES[0]?.id;
+    // Set default selected race: active race, else most recent finished, else first
+    const now = new Date();
+    const activeRace = RACES.find(r => {
+        const start = new Date(r.startDate + "T00:00:00");
+        const end = new Date(r.endDate + "T23:59:59");
+        return now >= start && now <= end;
+    });
+
+    if (activeRace) {
+        state.selectedRaceId = activeRace.id;
+    } else {
+        const finishedRaces = RACES.filter(r => {
+            const end = new Date(r.endDate + "T23:59:59");
+            return now > end;
+        });
+        state.selectedRaceId = finishedRaces.length > 0
+            ? finishedRaces[finishedRaces.length - 1].id
+            : RACES[0]?.id;
+    }
 
     // Wire up tab navigation (click)
     document.querySelectorAll(".nav-tab").forEach(tab => {
@@ -728,8 +750,19 @@ async function initApp() {
     const tvBtn = document.getElementById("tv-toggle");
     if (tvBtn) tvBtn.addEventListener("click", toggleTvMode);
 
-    // Render initial view
-    renderActiveView();
+    // Handle back/forward navigation via hash
+    window.addEventListener("hashchange", () => {
+        const hash = window.location.hash.substring(1);
+        if (TAB_ORDER.includes(hash)) switchView(hash);
+    });
+
+    // Render initial view based on URL hash or default
+    const initialHash = window.location.hash.substring(1);
+    if (TAB_ORDER.includes(initialHash)) {
+        switchView(initialHash);
+    } else {
+        switchView(state.activeView);
+    }
 
     // Start auto-refresh
     startDataRefresh();
