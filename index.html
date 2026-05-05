@@ -121,10 +121,9 @@
                     <h2 class="card-title">Submit Lap Time</h2>
                     <form id="submit-form" autocomplete="off">
                         <div class="form-group">
-                            <label for="submit-race">Race</label>
-                            <select id="submit-race" required>
-                                <option value="">Select a Race</option>
-                            </select>
+                            <label for="submit-race-display">Race</label>
+                            <input type="text" id="submit-race-display" readonly placeholder="Checking active race...">
+                            <input type="hidden" id="submit-race">
                         </div>
                         <div class="form-group">
                             <label for="submit-driver">Driver</label>

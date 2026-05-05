@@ -787,9 +787,17 @@ a:hover { text-decoration: underline; }
     appearance: none;
 }
 
-.form-group input:hover,
+.form-group input:hover:not([readonly]),
 .form-group select:hover {
     border-color: var(--f1-red-dim);
+}
+
+.form-group input[readonly] {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    border-color: var(--border);
+    cursor: default;
+    user-select: none;
 }
 
 .form-group select {

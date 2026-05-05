@@ -119,7 +119,7 @@ function computeConstructorStandings() {
             color: team.color,
             points: 0,
             wins: 0,
-            drivers: [],
+            drivers: team.drivers.map(d => ({ driverName: d, points: 0 })),
         };
     }
 
@@ -132,12 +132,14 @@ function computeConstructorStandings() {
             if (r.position === 1 && r.points > 0) teams[r.teamName].wins++;
             // Track driver for display in the card
             const existing = teams[r.teamName].drivers.find(d => d.driverName === r.driverName);
-            if (!existing) {
-                teams[r.teamName].drivers.push({ driverName: r.driverName, points: r.points });
-            } else {
+            if (existing) {
                 existing.points += r.points;
             }
         }
+    }
+
+    for (const t of Object.values(teams)) {
+        t.drivers.sort((a, b) => b.points - a.points);
     }
 
     return Object.values(teams)
@@ -424,13 +426,25 @@ function renderRaceBoard() {
 /* ---------- RENDER: SUBMIT FORM ---------- */
 
 function renderSubmitForm() {
-    const raceSelect = document.getElementById("submit-race");
+    const raceInput = document.getElementById("submit-race");
+    const raceDisplay = document.getElementById("submit-race-display");
     const driverList = document.getElementById("driver-list");
-    if (!raceSelect || !driverList) return;
+    if (!raceInput || !raceDisplay || !driverList) return;
 
-    if (raceSelect.children.length <= 1) {
-        raceSelect.innerHTML = '<option value="">Select a Race</option>' +
-            RACES.map(r => `<option value="${r.id}">${r.name}</option>`).join("");
+    // Find the currently active race
+    const now = new Date();
+    const activeRace = RACES.find(race => {
+        const start = new Date(race.startDate + "T00:00:00");
+        const end = new Date(race.endDate + "T23:59:59");
+        return now >= start && now <= end;
+    });
+
+    if (activeRace) {
+        raceInput.value = activeRace.id;
+        raceDisplay.value = activeRace.name;
+    } else {
+        raceInput.value = "";
+        raceDisplay.value = "No Active Race";
     }
 
     if (driverList.children.length === 0) {
@@ -454,8 +468,13 @@ async function handleSubmit(e) {
     const msVal = document.getElementById("time-ms").value;
 
     // Validation
-    if (!raceId || !driverName) {
-        showToast("Please fill in all fields.", "error");
+    if (!raceId) {
+        showToast("There is no active race to submit to.", "error");
+        return;
+    }
+
+    if (!driverName) {
+        showToast("Please select your name.", "error");
         return;
     }
 
