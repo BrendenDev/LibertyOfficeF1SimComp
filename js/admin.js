@@ -70,7 +70,7 @@ function renderTeamsEditor() {
     const tbody = document.getElementById("teams-editor");
 
     if (admin.teams.length === 0) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No teams yet. Click "+ Add Team" to get started.</td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No teams yet. Click "+ Add Team" to get started.</td></tr>`;
         return;
     }
 
@@ -80,6 +80,7 @@ function renderTeamsEditor() {
             <td><input type="color" value="${team.color}" data-field="color" class="admin-color" title="Pick team color"></td>
             <td><input type="text" value="${escHtml(team.drivers[0] || "")}" data-field="driver0" class="admin-input" placeholder="Driver 1"></td>
             <td><input type="text" value="${escHtml(team.drivers[1] || "")}" data-field="driver1" class="admin-input" placeholder="Driver 2"></td>
+            <td><input type="text" value="${escHtml(team.drivers[2] || "")}" data-field="driver2" class="admin-input" placeholder="Driver 3"></td>
             <td><button class="btn btn-small btn-danger" onclick="removeTeam(${idx})" title="Delete team">✕</button></td>
         </tr>
     `).join("");
@@ -97,7 +98,7 @@ function addTeam() {
         id: "team_" + Date.now(),
         name: "",
         color: "#E10600",
-        drivers: ["", ""],
+        drivers: ["", "", ""],
     });
     admin.teamsModified = true;
     renderTeamsEditor();
@@ -123,12 +124,12 @@ function collectTeamData() {
     const rows = document.querySelectorAll("#teams-editor tr");
     return Array.from(rows).map((row, idx) => {
         const inputs = row.querySelectorAll("input");
-        if (inputs.length < 4) return null;
+        if (inputs.length < 5) return null;
         return {
             id: admin.teams[idx]?.id || "team_" + Date.now() + "_" + idx,
             name: inputs[0].value.trim(),
             color: inputs[1].value,
-            drivers: [inputs[2].value.trim(), inputs[3].value.trim()].filter(Boolean),
+            drivers: [inputs[2].value.trim(), inputs[3].value.trim(), inputs[4].value.trim()].filter(Boolean),
         };
     }).filter(Boolean);
 }

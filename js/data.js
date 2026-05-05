@@ -249,13 +249,7 @@ async function submitTime(raceId, driverName, teamName, timeMs, timeFormatted) {
             s => s.raceId === raceId && s.driverName === driverName
         );
         if (existing) {
-            if (timeMs >= existing.timeMs) {
-                return { success: false, error: `Your existing time (${existing.timeFormatted}) is already faster!` };
-            }
-            existing.timeMs = timeMs;
-            existing.timeFormatted = timeFormatted;
-            existing.submittedAt = new Date().toISOString();
-            return { success: true, improved: true };
+            return { success: false, error: `You have already submitted a time for this race (${existing.timeFormatted}).` };
         }
         DUMMY_SUBMISSIONS.push({
             driverName, teamName, raceId, timeMs, timeFormatted,
@@ -269,10 +263,7 @@ async function submitTime(raceId, driverName, teamName, timeMs, timeFormatted) {
         const existing = await docRef.get();
 
         if (existing.exists) {
-            const oldTime = existing.data().timeMs;
-            if (timeMs >= oldTime) {
-                return { success: false, error: `Your existing time (${existing.data().timeFormatted}) is already faster!` };
-            }
+            return { success: false, error: `You have already submitted a time for this race (${existing.data().timeFormatted}).` };
         }
 
         await docRef.set({
@@ -280,7 +271,7 @@ async function submitTime(raceId, driverName, teamName, timeMs, timeFormatted) {
             submittedAt: new Date().toISOString(),
         });
 
-        return { success: true, improved: existing.exists };
+        return { success: true };
     } catch (err) {
         console.error("[data] Error submitting time:", err);
         return { success: false, error: "Failed to submit. Please try again." };

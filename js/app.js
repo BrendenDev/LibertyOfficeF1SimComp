@@ -11,6 +11,7 @@ const state = {
     submissions: [],
     activeView: "standings",
     selectedRaceId: null,
+    raceBoardMode: "drivers", // "drivers" or "constructors"
     tvMode: false,
     tvTimer: null,
     tvViewIndex: 0,
@@ -37,6 +38,11 @@ function getTeamColor(teamName) {
 /* ---------- SCORING ENGINE ---------- */
 
 function computeRaceResults(raceId) {
+    const race = RACES.find(r => r.id === raceId);
+    const raceOver = race?.endDate
+        ? new Date() > new Date(race.endDate + "T23:59:59")
+        : true; // if no endDate set, assume over
+
     const raceSubs = state.submissions
         .filter(s => s.raceId === raceId)
         .sort((a, b) => a.timeMs - b.timeMs);
@@ -49,7 +55,7 @@ function computeRaceResults(raceId) {
         teamName: sub.teamName,
         timeMs: sub.timeMs,
         timeFormatted: sub.timeFormatted,
-        points: POINTS_MAP[i] || 0,
+        points: raceOver ? (POINTS_MAP[i] || 0) : 0,
         gapMs: i === 0 ? 0 : sub.timeMs - leaderTime,
     }));
 }
@@ -71,7 +77,7 @@ function computeDriverStandings() {
             }
             drivers[r.driverName].points += r.points;
             drivers[r.driverName].raceResults[race.id] = r.points;
-            if (r.position === 1) drivers[r.driverName].wins++;
+            if (r.position === 1 && r.points > 0) drivers[r.driverName].wins++;
         }
     }
 
@@ -80,8 +86,31 @@ function computeDriverStandings() {
         .map((d, i) => ({ ...d, position: i + 1 }));
 }
 
+// Returns top-2-per-team results with re-ranked constructor points
+function computeConstructorRaceResults(raceId) {
+    const allResults = computeRaceResults(raceId);
+
+    // Keep only the fastest 2 per team (allResults is already sorted by time)
+    const teamCount = {};
+    const filtered = allResults.filter(r => {
+        teamCount[r.teamName] = (teamCount[r.teamName] || 0) + 1;
+        return teamCount[r.teamName] <= 2;
+    });
+
+    // Re-assign points from the filtered rank, preserving the raceOver gate
+    const race = RACES.find(r => r.id === raceId);
+    const raceOver = race?.endDate
+        ? new Date() > new Date(race.endDate + "T23:59:59")
+        : true;
+
+    return filtered.map((r, i) => ({
+        ...r,
+        position: i + 1,
+        points: raceOver ? (POINTS_MAP[i] || 0) : 0,
+    }));
+}
+
 function computeConstructorStandings() {
-    const driverStandings = computeDriverStandings();
     const teams = {};
 
     for (const team of state.teams) {
@@ -94,11 +123,20 @@ function computeConstructorStandings() {
         };
     }
 
-    for (const d of driverStandings) {
-        if (teams[d.teamName]) {
-            teams[d.teamName].points += d.points;
-            teams[d.teamName].wins += d.wins;
-            teams[d.teamName].drivers.push(d);
+    // Accumulate constructor points from each race using re-ranked results
+    for (const race of RACES) {
+        const results = computeConstructorRaceResults(race.id);
+        for (const r of results) {
+            if (!teams[r.teamName]) continue;
+            teams[r.teamName].points += r.points;
+            if (r.position === 1 && r.points > 0) teams[r.teamName].wins++;
+            // Track driver for display in the card
+            const existing = teams[r.teamName].drivers.find(d => d.driverName === r.driverName);
+            if (!existing) {
+                teams[r.teamName].drivers.push({ driverName: r.driverName, points: r.points });
+            } else {
+                existing.points += r.points;
+            }
         }
     }
 
@@ -106,6 +144,7 @@ function computeConstructorStandings() {
         .sort((a, b) => b.points - a.points || b.wins - a.wins)
         .map((t, i) => ({ ...t, position: i + 1 }));
 }
+
 
 
 /* ---------- TIME PARSING / FORMATTING ---------- */
@@ -138,7 +177,7 @@ function formatGap(gapMs) {
 
 /* ---------- VIEW MANAGEMENT ---------- */
 
-const TAB_ORDER = ["standings", "races", "submit", "schedule"];
+const TAB_ORDER = ["standings", "races", "submit", "rules"];
 
 function switchView(viewId, focusTab = false) {
     state.activeView = viewId;
@@ -157,6 +196,10 @@ function switchView(viewId, focusTab = false) {
         view.classList.toggle("active", isActive);
     });
 
+    // Show header only on standings
+    const header = document.querySelector(".header");
+    if (header) header.classList.toggle("header-hidden", viewId !== "standings");
+
     renderActiveView();
 
     // Focus the active tab if requested (keyboard nav)
@@ -164,30 +207,24 @@ function switchView(viewId, focusTab = false) {
         const activeTab = document.querySelector(`.nav-tab[data-view="${viewId}"]`);
         if (activeTab) activeTab.focus();
     }
-
-    // Auto-focus first form field when entering Submit view
-    if (viewId === "submit") {
-        setTimeout(() => {
-            const firstField = document.getElementById("submit-race");
-            if (firstField) firstField.focus();
-        }, 100);
-    }
 }
 
 function renderActiveView() {
     switch (state.activeView) {
         case "standings":
+            renderDriverStandings();
             renderConstructorStandings();
             break;
         case "races":
             renderRaceSelector();
             renderRaceResults();
+            renderConstructorRaceResults();
             break;
         case "submit":
             renderSubmitForm();
             break;
-        case "schedule":
-            renderSchedule();
+        case "rules":
+            // static view, nothing to render
             break;
     }
 }
@@ -228,93 +265,41 @@ function posClass(pos) {
     return "";
 }
 
+function renderDriverStandings() {
+    const standings = computeDriverStandings();
+    const tbody = document.querySelector("#driver-standings tbody");
+    if (!tbody) return;
+
+    const driverTeamMap = buildDriverTeamMap();
+
+    tbody.innerHTML = standings.map((d, i) => {
+        const teamColor = driverTeamMap[d.driverName]?.color || "#555";
+
+        return `
+            <tr style="--team-color: ${teamColor}; animation-delay: ${i * 40}ms">
+                <td><span class="pos-badge ${posClass(d.position)}">${d.position}</span></td>
+                <td class="team-cell">
+                    <span class="team-bar" style="background: ${teamColor}"></span>
+                    <span style="font-weight: 600;">${d.driverName}</span>
+                </td>
+                <td class="cell-muted" style="font-size: var(--text-sm);">${d.teamName}</td>
+                <td class="points-cell">${d.points}</td>
+                <td style="text-align: center; color: var(--text-muted);">${d.wins || "—"}</td>
+            </tr>
+        `;
+    }).join("");
+}
+
 
 /* ---------- RENDER: RACE RESULTS ---------- */
 
 function renderRaceSelector() {
-    const select = document.getElementById("race-select");
-    if (!select) return;
-
-    // Only rebuild options if they've changed
-    if (select.children.length === RACES.length && select.value === state.selectedRaceId) return;
-
-    select.innerHTML = RACES.map(r => {
-        const subCount = state.submissions.filter(s => s.raceId === r.id).length;
-        const label = subCount > 0 ? `${r.name} (${subCount} entries)` : r.name;
-        return `<option value="${r.id}" ${r.id === state.selectedRaceId ? "selected" : ""}>${label}</option>`;
-    }).join("");
-}
-
-function renderRaceResults() {
-    const raceId = state.selectedRaceId || RACES[0]?.id;
-    if (!raceId) return;
-
-    const results = computeRaceResults(raceId);
-    const tbody = document.querySelector("#race-results tbody");
-    const emptyEl = document.getElementById("race-empty");
-    const tableEl = document.getElementById("race-results");
-
-    if (results.length === 0) {
-        if (tableEl) tableEl.style.display = "none";
-        if (emptyEl) emptyEl.style.display = "flex";
-        return;
-    }
-
-    if (tableEl) tableEl.style.display = "";
-    if (emptyEl) emptyEl.style.display = "none";
-
-    const race = RACES.find(r => r.id === raceId);
-
-    tbody.innerHTML = results.map((r, i) => `
-        <tr style="--team-color: ${getTeamColor(r.teamName)}; animation-delay: ${i * 40}ms">
-            <td><span class="pos-badge ${posClass(r.position)}">${r.position}</span></td>
-            <td class="driver-name">${r.driverName}</td>
-            <td class="team-cell">
-                <span class="team-dot" style="background: ${getTeamColor(r.teamName)}"></span>
-                ${r.teamName}
-            </td>
-            <td class="time-cell">${r.timeFormatted}</td>
-            <td class="gap-cell">${r.position === 1 ? '<span class="leader-tag">LEADER</span>' : formatGap(r.gapMs)}</td>
-            <td class="points-cell">${r.points > 0 ? r.points : "-"}</td>
-        </tr>
-    `).join("");
-}
-
-
-/* ---------- RENDER: SUBMIT FORM ---------- */
-
-function renderSubmitForm() {
-    const raceSelect = document.getElementById("submit-race");
-    const driverList = document.getElementById("driver-list");
-    if (!raceSelect || !driverList) return;
-
-    // Populate races
-    if (raceSelect.children.length <= 1) {
-        raceSelect.innerHTML = '<option value="">Select a Race</option>' +
-            RACES.map(r => `<option value="${r.id}">${r.name}</option>`).join("");
-    }
-
-    // Populate driver datalist from teams
-    if (driverList.children.length === 0) {
-        const allDrivers = state.teams.flatMap(t =>
-            t.drivers.map(d => ({ name: d, team: t.name }))
-        );
-        driverList.innerHTML = allDrivers
-            .map(d => `<option value="${d.name}">${d.name} (${d.team})</option>`)
-            .join("");
-    }
-}
-
-
-/* ---------- RENDER: SCHEDULE ---------- */
-
-function renderSchedule() {
-    const grid = document.getElementById("schedule-grid");
-    if (!grid) return;
+    const container = document.getElementById("race-selector");
+    if (!container) return;
 
     const fmtDate = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-    grid.innerHTML = RACES.map(race => {
+    container.innerHTML = RACES.map(race => {
         const subCount = state.submissions.filter(s => s.raceId === race.id).length;
         const start = new Date(race.startDate + "T00:00:00");
         const end = new Date(race.endDate + "T23:59:59");
@@ -332,13 +317,13 @@ function renderSchedule() {
             statusClass = "status-completed";
         }
 
+        const isSelected = race.id === state.selectedRaceId;
         const dateRange = `${fmtDate(start)} – ${fmtDate(end)}`;
 
         return `
-            <div class="schedule-card" onclick="viewRaceResults('${race.id}')" style="cursor:pointer" title="View race results">
+            <div class="schedule-card${isSelected ? " selected" : ""}" onclick="selectRace('${race.id}')">
                 <div class="schedule-round">ROUND ${race.order}</div>
                 <h3 class="schedule-name">${race.name}</h3>
-                <p class="schedule-circuit">${race.circuit}</p>
                 <p class="schedule-date">${dateRange}</p>
                 <span class="schedule-status ${statusClass}">${status}</span>
                 ${subCount > 0 ? `<p class="schedule-entries">${subCount} entries</p>` : ""}
@@ -347,15 +332,118 @@ function renderSchedule() {
     }).join("");
 }
 
-
-
-function viewRaceResults(raceId) {
+function selectRace(raceId) {
     state.selectedRaceId = raceId;
-    switchView("races");
+    renderRaceSelector();
+    renderRaceBoard();
+}
+
+function toggleRaceBoard() {
+    state.raceBoardMode = state.raceBoardMode === "drivers" ? "constructors" : "drivers";
+
+    const btn = document.getElementById("race-board-toggle");
+    const title = document.getElementById("race-board-title");
+
+    if (state.raceBoardMode === "constructors") {
+        btn.textContent = "Drivers' View";
+        btn.classList.add("active");
+        if (title) title.textContent = "Constructors' Results";
+    } else {
+        btn.textContent = "Constructors' View";
+        btn.classList.remove("active");
+        if (title) title.textContent = "Drivers' Results";
+    }
+
+    renderRaceBoard();
+}
+
+function renderRaceResults() { renderRaceBoard(); } // alias for TV mode / legacy callers
+function renderConstructorRaceResults() {} // no-op, merged into renderRaceBoard
+
+function renderRaceBoard() {
+    const raceId = state.selectedRaceId || RACES[0]?.id;
+    if (!raceId) return;
+
+    const allResults = computeRaceResults(raceId);
+    const tbody = document.querySelector("#race-results tbody");
+    const emptyEl = document.getElementById("race-empty");
+    const tableEl = document.getElementById("race-results");
+
+    const race = RACES.find(r => r.id === raceId);
+    const raceOver = race?.endDate
+        ? new Date() > new Date(race.endDate + "T23:59:59")
+        : true;
+
+    let results;
+    let leaderTime;
+
+    if (state.raceBoardMode === "constructors") {
+        // Keep only top 2 per team by lap time
+        const teamCount = {};
+        results = allResults.filter(r => {
+            teamCount[r.teamName] = (teamCount[r.teamName] || 0) + 1;
+            return teamCount[r.teamName] <= 2;
+        });
+        leaderTime = results.length > 0 ? results[0].timeMs : 0;
+    } else {
+        results = allResults;
+        leaderTime = results.length > 0 ? results[0].timeMs : 0;
+    }
+
+    if (results.length === 0) {
+        if (tableEl) tableEl.style.display = "none";
+        if (emptyEl) emptyEl.style.display = "flex";
+        return;
+    }
+
+    if (tableEl) tableEl.style.display = "";
+    if (emptyEl) emptyEl.style.display = "none";
+
+    tbody.innerHTML = results.map((r, i) => {
+        const gapMs = i === 0 ? 0 : r.timeMs - leaderTime;
+        // In constructors mode, reassign points from filtered rank; in drivers mode use original
+        const displayPoints = raceOver
+            ? (state.raceBoardMode === "constructors" ? (POINTS_MAP[i] || 0) : r.points)
+            : 0;
+        return `
+        <tr style="--team-color: ${getTeamColor(r.teamName)}; animation-delay: ${i * 40}ms">
+            <td><span class="pos-badge ${posClass(i + 1)}">${i + 1}</span></td>
+            <td class="driver-name">${r.driverName}</td>
+            <td class="team-cell">
+                <span class="team-dot" style="background: ${getTeamColor(r.teamName)}"></span>
+                ${r.teamName}
+            </td>
+            <td class="time-cell">${raceOver ? r.timeFormatted : '<span style="opacity:.4">Hidden</span>'}</td>
+            <td class="gap-cell">${raceOver ? (i === 0 ? '<span class="leader-tag">LEADER</span>' : formatGap(gapMs)) : '—'}</td>
+            <td class="points-cell">${displayPoints > 0 ? displayPoints : "-"}</td>
+        </tr>
+    `}).join("");
 }
 
 
-/* ---------- SUBMISSION HANDLER ---------- */
+/* ---------- RENDER: SUBMIT FORM ---------- */
+
+function renderSubmitForm() {
+    const raceSelect = document.getElementById("submit-race");
+    const driverList = document.getElementById("driver-list");
+    if (!raceSelect || !driverList) return;
+
+    if (raceSelect.children.length <= 1) {
+        raceSelect.innerHTML = '<option value="">Select a Race</option>' +
+            RACES.map(r => `<option value="${r.id}">${r.name}</option>`).join("");
+    }
+
+    if (driverList.children.length === 0) {
+        const allDrivers = state.teams.flatMap(t =>
+            t.drivers.map(d => ({ name: d, team: t.name }))
+        );
+        driverList.innerHTML = allDrivers
+            .map(d => `<option value="${d.name}">${d.name} (${d.team})</option>`)
+            .join("");
+    }
+}
+
+
 
 async function handleSubmit(e) {
     e.preventDefault();
@@ -406,10 +494,7 @@ async function handleSubmit(e) {
     btn.disabled = false;
 
     if (result.success) {
-        const msg = result.improved
-            ? `Time improved to ${timeStr} 🚀`
-            : `Time submitted: ${timeStr} ✓`;
-        showToast(msg, "success");
+        showToast(`Time submitted: ${timeStr} ✓`, "success");
         document.getElementById("submit-form").reset();
 
         // Refresh data
@@ -528,15 +613,6 @@ async function initApp() {
     document.querySelectorAll(".nav-tab").forEach(tab => {
         tab.addEventListener("click", () => switchView(tab.dataset.view));
     });
-
-    // Wire up race selector
-    const raceSelect = document.getElementById("race-select");
-    if (raceSelect) {
-        raceSelect.addEventListener("change", (e) => {
-            state.selectedRaceId = e.target.value;
-            renderRaceResults();
-        });
-    }
 
     // Wire up submit form
     const form = document.getElementById("submit-form");

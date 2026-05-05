@@ -42,9 +42,9 @@
             <span class="nav-label">Submit Time</span>
             <span class="nav-shortcut" aria-hidden="true">3</span>
         </button>
-        <button class="nav-tab" data-view="schedule" id="tab-schedule" role="tab" aria-selected="false" tabindex="-1">
-            <span class="nav-icon">📅</span>
-            <span class="nav-label">Schedule</span>
+        <button class="nav-tab" data-view="rules" id="tab-rules" role="tab" aria-selected="false" tabindex="-1">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Rules</span>
             <span class="nav-shortcut" aria-hidden="true">4</span>
         </button>
     </nav>
@@ -54,27 +54,47 @@
 
             <!-- STANDINGS -->
             <section id="view-standings" class="view active">
-                <div class="card">
-                    <h2 class="card-title">Constructors' Championship</h2>
-                    <table class="standings-table" id="constructor-standings">
-                        <thead>
-                            <tr>
-                                <th>Pos</th>
-                                <th>Team</th>
-                                <th>Pts</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+                <div class="standings-grid">
+                    <div class="card">
+                        <h2 class="card-title">Drivers' Championship</h2>
+                        <table class="standings-table" id="driver-standings">
+                            <thead>
+                                <tr>
+                                    <th>Pos</th>
+                                    <th>Driver</th>
+                                    <th>Team</th>
+                                    <th>Pts</th>
+                                    <th>Wins</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <h2 class="card-title">Constructors' Championship</h2>
+                        <table class="standings-table" id="constructor-standings">
+                            <thead>
+                                <tr>
+                                    <th>Pos</th>
+                                    <th>Team</th>
+                                    <th>Pts</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
             <!-- RACE RESULTS -->
             <section id="view-races" class="view">
+                <div id="race-selector" class="race-selector"></div>
                 <div class="card">
-                    <div class="race-header">
-                        <h2 class="card-title" style="border:none; margin:0; padding:0;">Race Results</h2>
-                        <select id="race-select"></select>
+                    <div class="race-board-header">
+                        <h2 class="card-title" id="race-board-title" style="border:none; margin:0; padding:0;">Drivers' Results</h2>
+                        <button class="race-board-toggle" id="race-board-toggle" onclick="toggleRaceBoard()">
+                            Constructors' View
+                        </button>
                     </div>
                     <table class="race-table" id="race-results">
                         <thead>
@@ -131,9 +151,78 @@
                 </div>
             </section>
 
-            <!-- SCHEDULE -->
-            <section id="view-schedule" class="view">
-                <div id="schedule-grid" class="schedule-grid"></div>
+            <!-- RULES -->
+            <section id="view-rules" class="view">
+                <div class="rules-grid">
+
+                    <div class="card rules-card">
+                        <div class="rules-icon">⏱️</div>
+                        <h2 class="rules-card-title">Lap Time Submission</h2>
+                        <ul class="rules-list">
+                            <li>Each driver may submit <strong>one lap time per race</strong> — no resubmissions or overwrites.</li>
+                            <li>Times must be entered in <strong>Minutes : Seconds . Milliseconds</strong> format.</li>
+                            <li>Submissions are accepted only during the <strong>active race window</strong> (between the race start and end date).</li>
+                            <li>Make sure to select the correct race before submitting — mistakes cannot be corrected without admin intervention.</li>
+                        </ul>
+                    </div>
+
+                    <div class="card rules-card">
+                        <div class="rules-icon">🏆</div>
+                        <h2 class="rules-card-title">Points System</h2>
+                        <p class="rules-subtitle">Awarded to the top 10 finishers after each race ends.</p>
+                        <div class="points-table">
+                            <div class="points-row header-row">
+                                <span>Position</span><span>Points</span>
+                            </div>
+                            <div class="points-row"><span class="pos-badge pos-1">1</span><span>25</span></div>
+                            <div class="points-row"><span class="pos-badge pos-2">2</span><span>18</span></div>
+                            <div class="points-row"><span class="pos-badge pos-3">3</span><span>15</span></div>
+                            <div class="points-row"><span class="pos-badge">4</span><span>12</span></div>
+                            <div class="points-row"><span class="pos-badge">5</span><span>10</span></div>
+                            <div class="points-row"><span class="pos-badge">6</span><span>8</span></div>
+                            <div class="points-row"><span class="pos-badge">7</span><span>6</span></div>
+                            <div class="points-row"><span class="pos-badge">8</span><span>4</span></div>
+                            <div class="points-row"><span class="pos-badge">9</span><span>2</span></div>
+                            <div class="points-row"><span class="pos-badge">10</span><span>1</span></div>
+                        </div>
+                        <p class="rules-note">Points and wins are <strong>not awarded</strong> until the race end date has passed.</p>
+                    </div>
+
+                    <div class="card rules-card">
+                        <div class="rules-icon">🏎️</div>
+                        <h2 class="rules-card-title">Drivers' Championship</h2>
+                        <ul class="rules-list">
+                            <li>All drivers compete individually across all races.</li>
+                            <li>Points accumulate from every race using the standard points system above.</li>
+                            <li>In the event of a points tie, the driver with <strong>more wins</strong> ranks higher.</li>
+                            <li>Lap times are hidden on the race board <strong>until the race window closes</strong> — results reveal only after the end date.</li>
+                        </ul>
+                    </div>
+
+                    <div class="card rules-card">
+                        <div class="rules-icon">🔧</div>
+                        <h2 class="rules-card-title">Constructors' Championship</h2>
+                        <ul class="rules-list">
+                            <li>Teams consist of <strong>3 drivers</strong> each.</li>
+                            <li>All 3 drivers may submit times and compete in the Drivers' Championship.</li>
+                            <li>However, only the <strong>top 2 drivers per team</strong> (by lap time) count toward the Constructors' Championship per race.</li>
+                            <li>Constructor points are <strong>re-ranked</strong> from the filtered field — not inherited from the full driver race. The fastest eligible driver across all teams gets P1 constructor points, and so on.</li>
+                            <li>In the event of a points tie, the team with <strong>more race wins</strong> (constructor wins) ranks higher.</li>
+                        </ul>
+                    </div>
+
+                    <div class="card rules-card">
+                        <div class="rules-icon">📅</div>
+                        <h2 class="rules-card-title">Race Schedule</h2>
+                        <ul class="rules-list">
+                            <li>Each race has a <strong>start date</strong> and an <strong>end date</strong>.</li>
+                            <li><span class="status-pill status-upcoming">Upcoming</span> — race window has not opened yet. Submissions are not accepted.</li>
+                            <li><span class="status-pill status-active">Active</span> — race is currently open. Submit your lap time now.</li>
+                            <li><span class="status-pill status-completed">Completed</span> — race window has closed. Times, gaps, and points are now revealed.</li>
+                        </ul>
+                    </div>
+
+                </div>
             </section>
 
         </main>
