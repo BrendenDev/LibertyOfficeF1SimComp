@@ -241,8 +241,17 @@ async function fetchAllSubmissions() {
  * 
  * @returns {{ success: boolean, error?: string }}
  */
-async function submitTime(raceId, driverName, teamName, timeMs, timeFormatted) {
+async function submitTime(raceId, driverName, teamName, timeMs, timeFormatted, base64Proof) {
     const docId = `${raceId}_${driverName.toLowerCase().replace(/\s+/g, "_")}`;
+
+    // Store the proof locally (simulating a local photo database)
+    if (base64Proof) {
+        try {
+            localStorage.setItem(`proof_${docId}`, base64Proof);
+        } catch (e) {
+            console.warn("[data] Could not save proof locally. Local storage might be full.");
+        }
+    }
 
     if (USE_DUMMY_DATA) {
         const existing = DUMMY_SUBMISSIONS.find(
@@ -253,6 +262,7 @@ async function submitTime(raceId, driverName, teamName, timeMs, timeFormatted) {
         }
         DUMMY_SUBMISSIONS.push({
             driverName, teamName, raceId, timeMs, timeFormatted,
+            hasProof: !!base64Proof,
             submittedAt: new Date().toISOString(),
         });
         return { success: true };
@@ -268,6 +278,7 @@ async function submitTime(raceId, driverName, teamName, timeMs, timeFormatted) {
 
         await docRef.set({
             driverName, teamName, raceId, timeMs, timeFormatted,
+            hasProof: !!base64Proof,
             submittedAt: new Date().toISOString(),
         });
 

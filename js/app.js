@@ -451,10 +451,10 @@ function renderSubmitForm() {
 
     if (activeRace) {
         raceInput.value = activeRace.id;
-        raceDisplay.value = activeRace.name;
+        raceDisplay.textContent = activeRace.name;
     } else {
         raceInput.value = "";
-        raceDisplay.value = "No Active Race";
+        raceDisplay.textContent = "No Active Race";
     }
 
     if (driverList.children.length === 0) {
@@ -476,6 +476,7 @@ async function handleSubmit(e) {
     const minVal = document.getElementById("time-min").value;
     const secVal = document.getElementById("time-sec").value;
     const msVal = document.getElementById("time-ms").value;
+    const proofInput = document.getElementById("submit-proof");
 
     // Validation
     if (!raceId) {
@@ -502,6 +503,17 @@ async function handleSubmit(e) {
         return;
     }
 
+    if (!proofInput.files || proofInput.files.length === 0) {
+        showToast("Please upload a photo of your lap time.", "error");
+        return;
+    }
+
+    const proofFile = proofInput.files[0];
+    if (!proofFile.type.startsWith("image/")) {
+        showToast("Proof must be an image file.", "error");
+        return;
+    }
+
     const timeMs = mins * 60000 + secs * 1000 + ms;
     const timeStr = `${mins}:${secs.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
 
@@ -512,26 +524,101 @@ async function handleSubmit(e) {
         return;
     }
 
-    // Show loading
-    const btn = document.querySelector(".btn-submit");
-    btn.classList.add("loading");
-    btn.disabled = true;
+    // Show confirm modal
+    const modal = document.getElementById("confirm-modal");
+    const confirmBtn = document.getElementById("btn-confirm-submit");
+    const cancelBtn = document.getElementById("btn-cancel-submit");
 
-    const result = await submitTime(raceId, driverName, driverInfo.teamName, timeMs, timeStr);
+    modal.style.display = "flex";
 
-    btn.classList.remove("loading");
-    btn.disabled = false;
+    // Clean up old listeners to prevent multiple submissions
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    confirmBtn.replaceWith(newConfirmBtn);
+    cancelBtn.replaceWith(newCancelBtn);
 
-    if (result.success) {
-        showToast(`Time submitted: ${timeStr} ✓`, "success");
-        document.getElementById("submit-form").reset();
+    newCancelBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+    });
 
-        // Refresh data
-        state.submissions = await fetchAllSubmissions();
-        renderActiveView();
-    } else {
-        showToast(result.error || "Submission failed.", "error");
-    }
+    newConfirmBtn.addEventListener("click", async () => {
+        modal.style.display = "none";
+
+        // Show loading
+        const btn = document.querySelector(".btn-submit");
+        btn.classList.add("loading");
+        btn.disabled = true;
+
+        let base64Proof = "";
+        try {
+            base64Proof = await compressImage(proofFile);
+        } catch (err) {
+            console.error("Error compressing image:", err);
+            btn.classList.remove("loading");
+            btn.disabled = false;
+            showToast("Failed to process image.", "error");
+            return;
+        }
+
+        const result = await submitTime(raceId, driverName, driverInfo.teamName, timeMs, timeStr, base64Proof);
+
+        btn.classList.remove("loading");
+        btn.disabled = false;
+
+        if (result.success) {
+            showToast(`Time submitted: ${timeStr} ✓`, "success");
+            document.getElementById("submit-form").reset();
+
+            // Refresh data
+            state.submissions = await fetchAllSubmissions();
+            renderActiveView();
+        } else {
+            showToast(result.error || "Submission failed.", "error");
+        }
+    });
+}
+
+/**
+ * Compresses an image file using a canvas to reduce size before saving.
+ */
+function compressImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let width = img.width;
+                let height = img.height;
+                const max_size = 800;
+
+                if (width > height) {
+                    if (width > max_size) {
+                        height *= max_size / width;
+                        width = max_size;
+                    }
+                } else {
+                    if (height > max_size) {
+                        width *= max_size / height;
+                        height = max_size;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Compress to 70% JPEG quality
+                const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+                resolve(dataUrl);
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 
