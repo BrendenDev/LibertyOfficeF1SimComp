@@ -182,6 +182,25 @@ function formatGap(gapMs) {
 const TAB_ORDER = ["standings", "races", "submit", "rules"];
 
 function switchView(viewId, focusTab = false) {
+    if (viewId.startsWith("driver=")) {
+        state.activeView = viewId;
+        if (window.location.hash !== `#${viewId}`) {
+            window.history.pushState(null, "", `#${viewId}`);
+        }
+        document.querySelectorAll(".view").forEach(view => {
+            view.classList.toggle("active", view.id === "view-driver");
+        });
+        document.querySelectorAll(".nav-tab").forEach(tab => {
+            tab.classList.remove("active");
+            tab.setAttribute("aria-selected", "false");
+            tab.setAttribute("tabindex", "-1");
+        });
+        const header = document.querySelector(".header");
+        if (header) header.classList.add("header-hidden");
+        renderActiveView();
+        return;
+    }
+
     if (!TAB_ORDER.includes(viewId)) viewId = "standings";
     state.activeView = viewId;
 
@@ -234,6 +253,12 @@ function renderActiveView() {
         case "rules":
             // static view, nothing to render
             break;
+        default:
+            if (state.activeView.startsWith("driver=")) {
+                const driverName = decodeURIComponent(state.activeView.substring(7));
+                renderDriverProfile(driverName);
+            }
+            break;
     }
 }
 
@@ -247,7 +272,7 @@ function renderConstructorStandings() {
 
     tbody.innerHTML = standings.map((t, i) => {
         const driverList = t.drivers
-            .map(d => `<span class="constructor-driver">${d.driverName} <span class="driver-pts">${d.points}</span></span>`)
+            .map(d => `<span class="constructor-driver"><a href="#driver=${encodeURIComponent(d.driverName)}" class="driver-link">${d.driverName}</a> <span class="driver-pts">${d.points}</span></span>`)
             .join("");
 
         return `
@@ -288,7 +313,7 @@ function renderDriverStandings() {
                 <td><span class="pos-badge ${posClass(d.position)}">${d.position}</span></td>
                 <td class="team-cell">
                     <span class="team-bar" style="background: ${teamColor}"></span>
-                    <span style="font-weight: 600;">${d.driverName}</span>
+                    <a href="#driver=${encodeURIComponent(d.driverName)}" class="driver-link" style="font-weight: 600;">${d.driverName}</a>
                 </td>
                 <td class="cell-muted" style="font-size: var(--text-sm);">${d.teamName}</td>
                 <td class="points-cell">${d.points}</td>
@@ -420,7 +445,7 @@ function renderRaceBoard() {
         return `
         <tr style="--team-color: ${getTeamColor(r.teamName)}; animation-delay: ${i * 40}ms">
             <td><span class="pos-badge ${posClass(i + 1)}">${i + 1}</span></td>
-            <td class="driver-name">${r.driverName}</td>
+            <td class="driver-name"><a href="#driver=${encodeURIComponent(r.driverName)}" class="driver-link">${r.driverName}</a></td>
             <td class="team-cell">
                 <span class="team-dot" style="background: ${getTeamColor(r.teamName)}"></span>
                 ${r.teamName}
@@ -840,12 +865,12 @@ async function initApp() {
     // Handle back/forward navigation via hash
     window.addEventListener("hashchange", () => {
         const hash = window.location.hash.substring(1);
-        if (TAB_ORDER.includes(hash)) switchView(hash);
+        if (TAB_ORDER.includes(hash) || hash.startsWith("driver=")) switchView(hash);
     });
 
     // Render initial view based on URL hash or default
     const initialHash = window.location.hash.substring(1);
-    if (TAB_ORDER.includes(initialHash)) {
+    if (TAB_ORDER.includes(initialHash) || initialHash.startsWith("driver=")) {
         switchView(initialHash);
     } else {
         switchView(state.activeView);
@@ -860,5 +885,97 @@ async function initApp() {
     }
 }
 
-// Boot
+// Initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", initApp);
+
+
+/* ---------- RENDER: DRIVER PROFILE ---------- */
+
+function renderDriverProfile(driverName) {
+    const titleEl = document.getElementById("driver-profile-name");
+    const teamEl = document.getElementById("driver-profile-team");
+    const colorEl = document.getElementById("driver-profile-color");
+    const pointsEl = document.getElementById("driver-stat-points");
+    const winsEl = document.getElementById("driver-stat-wins");
+    const listEl = document.getElementById("driver-history-list");
+
+    if (!titleEl) return;
+
+    const standings = computeDriverStandings();
+    const driverStats = standings.find(d => d.driverName === driverName) || {
+        driverName: driverName,
+        teamName: "Unknown Team",
+        points: 0,
+        wins: 0
+    };
+
+    const teamColor = getTeamColor(driverStats.teamName);
+
+    titleEl.textContent = driverStats.driverName;
+    teamEl.textContent = driverStats.teamName;
+    colorEl.style.background = teamColor;
+    pointsEl.textContent = driverStats.points;
+    winsEl.textContent = driverStats.wins;
+
+    const driverSubs = state.submissions.filter(s => s.driverName === driverName);
+    
+    if (driverSubs.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">No lap times submitted yet.</div>`;
+        return;
+    }
+
+    const html = driverSubs.map(sub => {
+        const race = RACES.find(r => r.id === sub.raceId);
+        const raceName = race ? race.name : "Unknown Race";
+        const circuitName = race ? race.circuit : "";
+        
+        // Find how many points they earned in this race
+        const raceResults = computeRaceResults(sub.raceId);
+        const driverResult = raceResults.find(r => r.driverName === driverName);
+        const pointsEarned = driverResult ? driverResult.points : 0;
+        const gapMs = driverResult ? driverResult.gapMs : 0;
+        
+        const raceOver = race?.endDate
+            ? new Date() > new Date(race.endDate + "T23:59:59")
+            : true;
+
+        const timeDisplay = raceOver ? sub.timeFormatted : '<span style="opacity:.4">Hidden</span>';
+        const pointsDisplay = raceOver ? pointsEarned : "-";
+        
+        let proofHtml = `<div class="history-proof-none">No Proof</div>`;
+        if (sub.hasProof && sub.proofPath) {
+            proofHtml = `<img src="${sub.proofPath}" class="history-proof" alt="Proof for ${raceName}" onclick="openProofModal('${sub.proofPath}')">`;
+        }
+
+        return `
+            <div class="history-item">
+                <div class="history-race">
+                    <h4 class="history-race-name">${raceName}</h4>
+                    <p class="history-circuit">${circuitName}</p>
+                </div>
+                <div class="history-details">
+                    <div class="history-metric" style="width: 100px;">
+                        <span class="val">${timeDisplay}</span>
+                        <span class="lbl">Lap Time</span>
+                    </div>
+                    <div class="history-metric" style="width: 60px;">
+                        <span class="val">${pointsDisplay}</span>
+                        <span class="lbl">Points</span>
+                    </div>
+                </div>
+                ${proofHtml}
+            </div>
+        `;
+    }).join("");
+
+    listEl.innerHTML = html;
+}
+
+window.openProofModal = function(src) {
+    const modal = document.getElementById('proof-modal');
+    const img = document.getElementById('proof-modal-img');
+    if (modal && img) {
+        img.src = src;
+        modal.style.display = 'flex';
+    }
+};

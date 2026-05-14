@@ -224,6 +224,35 @@
                 </div>
             </section>
 
+            <!-- DRIVER PROFILE -->
+            <section id="view-driver" class="view">
+                <div class="driver-profile-header">
+                    <button class="btn-back" onclick="switchView('standings')">← Back to Standings</button>
+                    <div class="driver-profile-title" id="driver-profile-title">
+                        <span class="team-dot" id="driver-profile-color"></span>
+                        <h2 id="driver-profile-name">Driver Name</h2>
+                    </div>
+                    <p class="driver-profile-team" id="driver-profile-team">Team Name</p>
+                    <div class="driver-profile-stats">
+                        <div class="stat-box">
+                            <span class="stat-value" id="driver-stat-points">0</span>
+                            <span class="stat-label">Total Points</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-value" id="driver-stat-wins">0</span>
+                            <span class="stat-label">Wins</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">Race History</h3>
+                    <div id="driver-history-list" class="driver-history-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+
         </main>
 
         <!-- ===== FOOTER ===== -->
@@ -252,6 +281,14 @@
         </div>
     </div>
 
+    <!-- Proof Image Modal -->
+    <div id="proof-modal" class="modal-overlay" style="display: none;" onclick="this.style.display='none'">
+        <div class="modal" onclick="event.stopPropagation()">
+            <img id="proof-modal-img" src="" alt="Proof of time">
+            <button class="btn-close" onclick="document.getElementById('proof-modal').style.display='none'">Close</button>
+        </div>
+    </div>
+
     <!-- Toast notification -->
     <div id="toast" class="toast"></div>
 
@@ -263,13 +300,8 @@
     <!-- TV toggle button -->
     <button id="tv-toggle" class="tv-toggle-btn">TV Mode</button>
 
-    <!-- Scripts (order matters: config → firebase → data → app) -->
-    <!-- Firebase SDK (only needed when USE_DUMMY_DATA = false) -->
-    <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
-
+    <!-- Scripts (order matters: config → data → app) -->
     <script src="js/config.js"></script>
-    <script src="js/firebase-init.js"></script>
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
 

@@ -1,8 +1,8 @@
 /* ============================================================
    admin.js — Admin panel for F1 Sim Competition
    ============================================================
-   Manages teams/drivers, races, and submissions directly in
-   Firestore. Access via admin.html (hidden, not linked).
+   Manages teams/drivers, races, and submissions via the
+   local Node.js SQL API. Access via admin.html.
    ============================================================ */
 
 /* ---------- STATE ---------- */
@@ -153,33 +153,21 @@ async function publishTeams() {
     btn.textContent = "Publishing...";
 
     try {
-        const batch = db.batch();
-
-        const existing = await db.collection(COLLECTION.TEAMS).get();
-        existing.forEach(doc => {
-            if (doc.id !== "_meta") batch.delete(doc.ref);
+        const response = await fetch(`${API_BASE_URL}/teams`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(teams)
         });
 
-        for (const team of teams) {
-            const docId = team.name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
-            const ref = db.collection(COLLECTION.TEAMS).doc(docId);
-            batch.set(ref, { name: team.name, color: team.color, drivers: team.drivers });
-            team.id = docId;
-        }
-
-        const metaRef = db.collection(COLLECTION.TEAMS).doc("_meta");
-        const metaSnap = await metaRef.get();
-        const newVersion = (metaSnap.exists ? (metaSnap.data().version || 0) : 0) + 1;
-        batch.set(metaRef, { version: newVersion });
-
-        await batch.commit();
+        if (!response.ok) throw new Error("Failed to save teams");
+        const data = await response.json();
 
         admin.teams = teams;
         admin.teamsModified = false;
         updatePublishBar();
         renderTeamsEditor();
 
-        showAdminToast(`Teams published! (v${newVersion})`, "success");
+        showAdminToast(`Teams published!`, "success");
     } catch (err) {
         console.error("[admin] Publish teams error:", err);
         showAdminToast("Publish failed: " + err.message, "error");
@@ -287,44 +275,21 @@ async function publishRaces() {
     btn.textContent = "Publishing...";
 
     try {
-        const batch = db.batch();
-
-        // Delete existing race docs
-        const existing = await db.collection(COLLECTION.RACES).get();
-        existing.forEach(doc => {
-            if (doc.id !== "_meta") batch.delete(doc.ref);
+        const response = await fetch(`${API_BASE_URL}/races`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(races)
         });
 
-        // Write new race docs
-        for (const race of races) {
-            const ref = db.collection(COLLECTION.RACES).doc(race.id);
-            batch.set(ref, {
-                name: race.name,
-                circuit: race.circuit,
-                startDate: race.startDate,
-                endDate: race.endDate,
-                order: race.order,
-            });
-        }
-
-        // Bump version
-        const metaRef = db.collection(COLLECTION.RACES).doc("_meta");
-        const metaSnap = await metaRef.get();
-        const newVersion = (metaSnap.exists ? (metaSnap.data().version || 0) : 0) + 1;
-        batch.set(metaRef, { version: newVersion });
-
-        await batch.commit();
-
-        // Sort by order
-        races.sort((a, b) => a.order - b.order);
+        if (!response.ok) throw new Error("Failed to save races");
+        const data = await response.json();
 
         admin.races = races;
         admin.racesModified = false;
         updatePublishBar();
         renderRacesEditor();
-        populateRaceFilter(); // refresh submissions filter
 
-        showAdminToast(`Races published! (v${newVersion})`, "success");
+        showAdminToast(`Races published!`, "success");
     } catch (err) {
         console.error("[admin] Publish races error:", err);
         showAdminToast("Publish failed: " + err.message, "error");
@@ -485,10 +450,13 @@ async function saveSubmission(docId) {
     }
 
     try {
-        await db.collection(COLLECTION.SUBMISSIONS).doc(docId).update({
-            timeMs: timeMs,
-            timeFormatted: timeStr,
+        const response = await fetch(`${API_BASE_URL}/submissions/${docId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ timeMs, timeFormatted: timeStr })
         });
+
+        if (!response.ok) throw new Error("Failed to update submission");
 
         const sub = admin.submissions.find(s =>
             (s.docId || `${s.raceId}_${s.driverName.toLowerCase().replace(/\s+/g, "_")}`) === docId
@@ -516,7 +484,11 @@ async function deleteSubmission(docId) {
     if (!confirm(`Delete submission "${label}"?`)) return;
 
     try {
-        await db.collection(COLLECTION.SUBMISSIONS).doc(docId).delete();
+        const response = await fetch(`${API_BASE_URL}/submissions/${docId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error("Failed to delete submission");
 
         admin.submissions = admin.submissions.filter(s =>
             (s.docId || `${s.raceId}_${s.driverName.toLowerCase().replace(/\s+/g, "_")}`) !== docId
@@ -551,14 +523,22 @@ async function confirmAddSubmission() {
     const docId = `${raceId}_${driverName.toLowerCase().replace(/\s+/g, "_")}`;
 
     try {
-        await db.collection(COLLECTION.SUBMISSIONS).doc(docId).set({
-            driverName,
-            teamName,
-            raceId,
-            timeMs,
-            timeFormatted: timeStr,
-            submittedAt: new Date().toISOString(),
+        const response = await fetch(`${API_BASE_URL}/submissions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                driverName,
+                teamName,
+                raceId,
+                timeMs,
+                timeFormatted: timeStr
+            })
         });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || "Failed to add submission");
+        }
 
         admin.submissions.push({
             docId,
@@ -567,6 +547,7 @@ async function confirmAddSubmission() {
             raceId,
             timeMs,
             timeFormatted: timeStr,
+            hasProof: false
         });
 
         admin.addingSubmission = false;
@@ -601,40 +582,28 @@ function populateRaceFilter() {
 /* ---------- INITIALIZATION ---------- */
 
 async function initAdmin() {
-    if (!db) {
-        document.querySelector(".container").innerHTML = `
-            <div class="admin-loading" style="padding: 80px 20px; text-align: center;">
-                <h2 style="color: var(--f1-red); margin-bottom: 16px;">Firebase Not Connected</h2>
-                <p>Set <code>USE_DUMMY_DATA = false</code> in <code>js/firebase-init.js</code> and add your Firebase config.</p>
-            </div>
-        `;
-        return;
-    }
-
-    // Fetch teams (bypass cache — always read fresh for admin)
+    // Fetch teams
     try {
-        const snapshot = await db.collection(COLLECTION.TEAMS).get();
-        admin.teams = [];
-        snapshot.forEach(doc => {
-            if (doc.id !== "_meta") {
-                admin.teams.push({ id: doc.id, ...doc.data() });
-            }
-        });
+        const response = await fetch(`${API_BASE_URL}/teams`);
+        if (response.ok) {
+            admin.teams = await response.json();
+        } else {
+            throw new Error("Failed to fetch");
+        }
     } catch (err) {
         console.error("[admin] Failed to fetch teams:", err);
         showAdminToast("Failed to load teams: " + err.message, "error");
     }
 
-    // Fetch races (bypass cache — always read fresh for admin)
+    // Fetch races
     try {
-        const snapshot = await db.collection(COLLECTION.RACES).get();
-        admin.races = [];
-        snapshot.forEach(doc => {
-            if (doc.id !== "_meta") {
-                admin.races.push({ id: doc.id, ...doc.data() });
-            }
-        });
-        admin.races.sort((a, b) => (a.order || 0) - (b.order || 0));
+        const response = await fetch(`${API_BASE_URL}/races`);
+        if (response.ok) {
+            admin.races = await response.json();
+            admin.races.sort((a, b) => (a.order || 0) - (b.order || 0));
+        } else {
+            throw new Error("Failed to fetch");
+        }
     } catch (err) {
         console.error("[admin] Failed to fetch races:", err);
         showAdminToast("Failed to load races: " + err.message, "error");
@@ -642,11 +611,13 @@ async function initAdmin() {
 
     // Fetch submissions
     try {
-        const snapshot = await db.collection(COLLECTION.SUBMISSIONS).get();
-        admin.submissions = [];
-        snapshot.forEach(doc => {
-            admin.submissions.push({ docId: doc.id, ...doc.data() });
-        });
+        const response = await fetch(`${API_BASE_URL}/submissions`);
+        if (response.ok) {
+            const data = await response.json();
+            admin.submissions = data.map(doc => ({ docId: doc.id, ...doc }));
+        } else {
+            throw new Error("Failed to fetch");
+        }
     } catch (err) {
         console.error("[admin] Failed to fetch submissions:", err);
         showAdminToast("Failed to load submissions: " + err.message, "error");
@@ -658,4 +629,4 @@ async function initAdmin() {
     renderSubmissions();
 }
 
-document.addEventListener("DOMContentLoaded", initAdmin);
+// initAdmin is called by the login flow in admin.html after successful authentication.

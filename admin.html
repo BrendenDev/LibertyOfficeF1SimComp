@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,6 +34,7 @@
             border-radius: var(--radius-pill);
             transition: all var(--transition-fast);
         }
+
         .admin-back:hover {
             color: var(--text-primary);
             border-color: var(--f1-red);
@@ -105,11 +107,13 @@
             font-size: var(--text-sm);
             transition: border-color var(--transition-fast);
         }
+
         .admin-input:focus {
             outline: none;
             border-color: var(--f1-red);
             box-shadow: 0 0 0 2px var(--f1-red-dim);
         }
+
         .admin-input.time-input {
             font-family: 'Courier New', monospace;
             width: 120px;
@@ -125,8 +129,15 @@
             cursor: pointer;
             padding: 2px;
         }
-        .admin-color::-webkit-color-swatch-wrapper { padding: 0; }
-        .admin-color::-webkit-color-swatch { border: none; border-radius: 4px; }
+
+        .admin-color::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .admin-color::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
 
         /* Team color swatch */
         .team-swatch {
@@ -151,6 +162,7 @@
             transition: all var(--transition-fast);
             white-space: nowrap;
         }
+
         .btn:hover {
             background: var(--bg-card-hover);
             border-color: var(--border-light);
@@ -162,10 +174,12 @@
             color: #fff;
             font-weight: 600;
         }
+
         .btn-primary:hover {
             background: var(--f1-red-bright);
             box-shadow: 0 0 16px var(--f1-red-glow);
         }
+
         .btn-primary:disabled {
             opacity: 0.4;
             pointer-events: none;
@@ -175,6 +189,7 @@
             color: var(--f1-red-bright);
             border-color: rgba(225, 6, 0, 0.2);
         }
+
         .btn-danger:hover {
             background: rgba(225, 6, 0, 0.1);
             border-color: var(--f1-red);
@@ -189,6 +204,7 @@
             color: var(--green);
             border-color: rgba(0, 230, 118, 0.2);
         }
+
         .btn-success:hover {
             background: rgba(0, 230, 118, 0.1);
             border-color: var(--green);
@@ -209,9 +225,11 @@
             justify-content: space-between;
             backdrop-filter: blur(12px);
         }
+
         .publish-bar.visible {
             display: flex;
         }
+
         .publish-bar p {
             color: var(--f1-red-bright);
             font-size: var(--text-sm);
@@ -234,6 +252,7 @@
             background-position: right 10px center;
             cursor: pointer;
         }
+
         .race-filter:focus {
             outline: none;
             border-color: var(--f1-red);
@@ -244,10 +263,12 @@
             font-size: var(--text-sm);
             color: var(--text-primary);
         }
+
         .cell-muted {
             font-size: var(--text-xs);
             color: var(--text-muted);
         }
+
         .cell-time {
             font-family: 'Courier New', monospace;
             color: var(--cyan);
@@ -304,126 +325,294 @@
             pointer-events: none;
             box-shadow: var(--shadow);
         }
+
         #admin-toast.toast-visible {
             transform: translateX(-50%) translateY(0);
         }
+
+        /* ===== LOGIN OVERLAY ===== */
+        #login-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        #login-overlay.hidden {
+            display: none;
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--sp-10) var(--sp-12);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .login-logo {
+            font-size: 2.5rem;
+            margin-bottom: var(--sp-2);
+        }
+
+        .login-card h2 {
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            color: var(--text-primary);
+            margin-bottom: var(--sp-2);
+            letter-spacing: 1px;
+        }
+
+        .login-card p {
+            font-size: var(--text-sm);
+            color: var(--text-muted);
+            margin-bottom: var(--sp-6);
+        }
+
+        .login-input {
+            width: 100%;
+            padding: var(--sp-3) var(--sp-4);
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: var(--text-sm);
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: var(--sp-4);
+            box-sizing: border-box;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: var(--f1-red);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: var(--sp-3);
+            background: var(--f1-red);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-family: var(--font-body);
+            font-size: var(--text-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .login-btn:hover {
+            background: var(--f1-red-bright);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .login-error {
+            font-size: var(--text-xs);
+            color: var(--f1-red-bright);
+            margin-top: var(--sp-3);
+            min-height: 1em;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-
-    <!-- Header -->
-    <div class="admin-header">
-        <h1>🔧 Admin Panel</h1>
-        <a href="index.html" class="admin-back">← Back to Site</a>
-    </div>
-
-    <!-- Publish bar (shows when teams or races have unsaved changes) -->
-    <div class="publish-bar" id="publish-bar">
-        <p>⚠ You have unsaved changes<span class="unsaved-dot"></span></p>
-        <div class="section-actions">
-            <button class="btn btn-primary" id="publish-teams-btn" onclick="publishTeams()" style="display:none">Publish Teams</button>
-            <button class="btn btn-primary" id="publish-races-btn" onclick="publishRaces()" style="display:none">Publish Races</button>
+    <!-- Login Overlay -->
+    <div id="login-overlay">
+        <div class="login-card">
+            <h2>Admin Panel</h2>
+            <input type="password" id="login-password" class="login-input" placeholder="Enter password"
+                autocomplete="current-password">
+            <button class="login-btn" id="login-btn" onclick="submitLogin()">Sign In</button>
+            <p class="login-error" id="login-error"></p>
         </div>
     </div>
 
-    <!-- TEAMS SECTION -->
-    <div class="admin-section">
-        <div class="section-header">
-            <h2>Teams & Drivers</h2>
-            <div class="section-actions">
-                <button class="btn" onclick="addTeam()">+ Add Team</button>
+    <div class="container" id="admin-container" style="display:none">
+
+        <!-- Header -->
+        <div class="admin-header">
+            <h1>🔧 Admin Panel</h1>
+            <div>
+                <a href="index.html" class="admin-back" style="margin-right: 8px">← Back to Site</a>
+                <button class="btn btn-small btn-danger" onclick="adminLogout()">Logout</button>
             </div>
         </div>
-        <div class="card">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Team Name</th>
-                        <th>Color</th>
-                        <th>Driver 1</th>
-                        <th>Driver 2</th>
-                        <th>Driver 3</th>
-                        <th style="width: 60px;"></th>
-                    </tr>
-                </thead>
-                <tbody id="teams-editor">
-                    <tr><td colspan="6" class="admin-loading">Loading teams...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 
-    <!-- RACES SECTION -->
-    <div class="admin-section">
-        <div class="section-header">
-            <h2>Races</h2>
+        <!-- Publish bar (shows when teams or races have unsaved changes) -->
+        <div class="publish-bar" id="publish-bar">
+            <p>⚠ You have unsaved changes<span class="unsaved-dot"></span></p>
             <div class="section-actions">
-                <button class="btn" onclick="addRace()">+ Add Race</button>
+                <button class="btn btn-primary" id="publish-teams-btn" onclick="publishTeams()"
+                    style="display:none">Publish Teams</button>
+                <button class="btn btn-primary" id="publish-races-btn" onclick="publishRaces()"
+                    style="display:none">Publish Races</button>
             </div>
         </div>
-        <div class="card">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Race Name</th>
-                        <th>Circuit</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>ID</th>
-                        <th style="width: 60px;"></th>
-                    </tr>
-                </thead>
-                <tbody id="races-editor">
-                    <tr><td colspan="6" class="admin-loading">Loading races...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 
-    <!-- SUBMISSIONS SECTION -->
-    <div class="admin-section">
-        <div class="section-header">
-            <h2>Submissions</h2>
-            <div class="section-actions">
-                <select class="race-filter" id="sub-race-filter" onchange="renderSubmissions()">
-                    <option value="all">All Races</option>
-                </select>
-                <button class="btn" onclick="toggleAddSubmission()">+ Add Submission</button>
+        <!-- TEAMS SECTION -->
+        <div class="admin-section">
+            <div class="section-header">
+                <h2>Teams & Drivers</h2>
+                <div class="section-actions">
+                    <button class="btn" onclick="addTeam()">+ Add Team</button>
+                </div>
+            </div>
+            <div class="card">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Team Name</th>
+                            <th>Color</th>
+                            <th>Driver 1</th>
+                            <th>Driver 2</th>
+                            <th>Driver 3</th>
+                            <th style="width: 60px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="teams-editor">
+                        <tr>
+                            <td colspan="6" class="admin-loading">Loading teams...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-        <div class="card">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Race</th>
-                        <th>Driver</th>
-                        <th>Team</th>
-                        <th>Time</th>
-                        <th>Points</th>
-                        <th style="width: 120px;"></th>
-                    </tr>
-                </thead>
-                <tbody id="submissions-editor">
-                    <tr><td colspan="6" class="admin-loading">Loading submissions...</td></tr>
-                </tbody>
-            </table>
+
+        <!-- RACES SECTION -->
+        <div class="admin-section">
+            <div class="section-header">
+                <h2>Races</h2>
+                <div class="section-actions">
+                    <button class="btn" onclick="addRace()">+ Add Race</button>
+                </div>
+            </div>
+            <div class="card">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Race Name</th>
+                            <th>Circuit</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>ID</th>
+                            <th style="width: 60px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="races-editor">
+                        <tr>
+                            <td colspan="6" class="admin-loading">Loading races...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-</div>
+        <!-- SUBMISSIONS SECTION -->
+        <div class="admin-section">
+            <div class="section-header">
+                <h2>Submissions</h2>
+                <div class="section-actions">
+                    <select class="race-filter" id="sub-race-filter" onchange="renderSubmissions()">
+                        <option value="all">All Races</option>
+                    </select>
+                    <button class="btn" onclick="toggleAddSubmission()">+ Add Submission</button>
+                </div>
+            </div>
+            <div class="card">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Race</th>
+                            <th>Driver</th>
+                            <th>Team</th>
+                            <th>Time</th>
+                            <th>Points</th>
+                            <th style="width: 120px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissions-editor">
+                        <tr>
+                            <td colspan="6" class="admin-loading">Loading submissions...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-<!-- Toast -->
-<div id="admin-toast"></div>
+    </div> <!-- end #admin-container -->
 
-<!-- Scripts -->
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
-<script src="js/config.js"></script>
-<script src="js/firebase-init.js"></script>
-<script src="js/admin.js"></script>
+    <!-- Toast -->
+    <div id="admin-toast"></div>
+
+    <!-- Auth logic (must come before admin.js) -->
+    <script>
+        async function checkSession() {
+            const res = await fetch('/api/admin/session');
+            const data = await res.json();
+            if (data.isAdmin) {
+                document.getElementById('login-overlay').classList.add('hidden');
+                document.getElementById('admin-container').style.display = '';
+            }
+        }
+
+        async function submitLogin() {
+            const pw = document.getElementById('login-password').value;
+            const btn = document.getElementById('login-btn');
+            const errEl = document.getElementById('login-error');
+            btn.disabled = true;
+            errEl.textContent = '';
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pw })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById('admin-container').style.display = '';
+                    initAdmin();
+                } else {
+                    errEl.textContent = data.error || 'Incorrect password.';
+                }
+            } catch (e) {
+                errEl.textContent = 'Connection error.';
+            }
+            btn.disabled = false;
+        }
+
+        async function adminLogout() {
+            await fetch('/api/admin/logout', { method: 'POST' });
+            location.reload();
+        }
+
+        // Enter key submits login
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession();
+            document.getElementById('login-password').addEventListener('keydown', e => {
+                if (e.key === 'Enter') submitLogin();
+            });
+        });
+    </script>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/admin.js"></script>
 
 </body>
+
 </html>
